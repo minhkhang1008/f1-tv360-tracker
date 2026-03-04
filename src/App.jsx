@@ -29,8 +29,8 @@ const initialRaceData = [
   { id: 24, name: "Abu Dhabi GP", date: "2026-12-06", packageId: "pkg_group_2", packageType: "Chung gói 30 ngày", price: 0, track: "Yas Marina", hasSprint: false, sessions: { p1: "16:30", p2: "20:00", p3: "17:30", q: "21:00", race: "20:00" } }
 ];
 
-const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/THAY_BANG_BIN_ID_CUA_BAN'; // Bạn nhớ sửa lại Bin ID
-const JSONBIN_KEY = 'THAY_BANG_MASTER_KEY_CUA_BAN'; // Bạn nhớ sửa lại Key
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/69a85c64d0ea881f40ee9d8d'; 
+const JSONBIN_KEY = '$2a$10$iEZhrIHbw8gsqJAc/wPUUelZgp4iUUMgFy8ilmua2GHT.qVPDXxX.'; 
 
 // Helper lấy mã Quốc gia để get cờ từ flagcdn
 const getCountryCode = (raceName) => {
