@@ -1,70 +1,128 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Calendar, MapPin, Tv, CheckCircle2, Circle, AlertCircle, Trophy, Moon, Layers } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Calendar, MapPin, Tv, CheckCircle2, Circle, AlertCircle, Trophy, Moon, Layers, RefreshCw } from 'lucide-react';
 
 // Dữ liệu F1 2026 chuẩn hóa kèm logic nhóm gói cước của TV360
 const initialRaceData = [
-  { id: 1, name: "Australian GP", date: "2026-03-08", packageId: "pkg_1", packageType: "Gói 7 ngày", price: 25000, track: "Albert Park", sessions: { p1: "08:30", p2: "12:00", p3: "08:30", q: "12:00", race: "11:00" } },
-  { id: 2, name: "Chinese GP", date: "2026-03-15", packageId: "pkg_2", packageType: "Gói 7 ngày", price: 25000, track: "Thượng Hải", sessions: { p1: "10:30", p2: "14:30", p3: "14:00", q: "14:00", race: "14:00" } },
-  { id: 3, name: "Japanese GP", date: "2026-03-29", packageId: "pkg_3", packageType: "Gói 7 ngày", price: 25000, track: "Suzuka", sessions: { p1: "09:30", p2: "13:00", p3: "09:30", q: "13:00", race: "12:00" } },
-  { id: 4, name: "Bahrain GP", date: "2026-04-12", packageId: "pkg_4", packageType: "Gói 7 ngày", price: 25000, track: "Bahrain", sessions: { p1: "19:30", p2: "23:00", p3: "19:30", q: "23:00", race: "22:00" } },
-  { id: 5, name: "Saudi Arabian GP", date: "2026-04-19", packageId: "pkg_5", packageType: "Gói 7 ngày", price: 25000, track: "Jeddah", sessions: { p1: "20:30", p2: "00:00", p3: "20:30", q: "00:00", race: "00:00" } },
-  
-  // Các chặng bỏ qua
-  { id: 6, name: "Miami GP", date: "2026-05-03", packageId: "skip_1", packageType: "Không xem", price: 0, isSkipped: true, track: "Miami", sessions: { p1: "-", p2: "-", p3: "-", q: "-", race: "-" } },
-  
-  { id: 7, name: "Emilia Romagna GP", date: "2026-05-17", packageId: "pkg_7", packageType: "Gói 7 ngày", price: 25000, track: "Imola", sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 8, name: "Monaco GP", date: "2026-05-24", packageId: "pkg_8", packageType: "Gói 7 ngày", price: 25000, track: "Monaco", sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  
-  // Các chặng bỏ qua
-  { id: 9, name: "Canadian GP", date: "2026-06-07", packageId: "skip_2", packageType: "Không xem", price: 0, isSkipped: true, track: "Montreal", sessions: { p1: "-", p2: "-", p3: "-", q: "-", race: "-" } },
-
-  // GÓI 30 NGÀY - NHÓM 1 (Chỉ tính tiền chặng đầu)
-  { id: 10, name: "Barcelona-Catalunya GP", date: "2026-06-21", packageId: "pkg_group_1", packageType: "Gói 30 ngày (Châu Âu)", price: 50000, track: "Barcelona", sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 11, name: "Austrian GP", date: "2026-06-28", packageId: "pkg_group_1", packageType: "Chung gói 30 ngày", price: 0, track: "Red Bull Ring", sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 12, name: "British GP", date: "2026-07-05", packageId: "pkg_group_1", packageType: "Chung gói 30 ngày", price: 0, track: "Silverstone", sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 13, name: "Belgian GP", date: "2026-07-19", packageId: "pkg_group_1", packageType: "Chung gói 30 ngày", price: 0, track: "Spa-Francorchamps", sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 14, name: "Hungarian GP", date: "2026-07-26", packageId: "pkg_group_1", packageType: "Chung gói 30 ngày", price: 0, track: "Hungaroring", sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-
-  { id: 15, name: "Dutch GP", date: "2026-08-23", packageId: "pkg_15", packageType: "Gói 7 ngày", price: 25000, track: "Zandvoort", sessions: { p1: "17:30", p2: "21:30", p3: "17:00", q: "21:00", race: "20:00" } },
-  { id: 16, name: "Italian GP", date: "2026-09-06", packageId: "pkg_16", packageType: "Gói 7 ngày", price: 25000, track: "Monza", sessions: { p1: "17:30", p2: "21:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 17, name: "Azerbaijan GP", date: "2026-09-20", packageId: "pkg_17", packageType: "Gói 7 ngày", price: 25000, track: "Baku", sessions: { p1: "16:30", p2: "20:00", p3: "15:30", q: "19:00", race: "18:00" } },
-  { id: 18, name: "Singapore GP", date: "2026-10-04", packageId: "pkg_18", packageType: "Gói 7 ngày", price: 25000, track: "Marina Bay", sessions: { p1: "16:30", p2: "20:00", p3: "16:30", q: "20:00", race: "19:00" } },
-  
-  // Các chặng bỏ qua
-  { id: 19, name: "United States GP", date: "2026-10-18", packageId: "skip_3", packageType: "Không xem", price: 0, isSkipped: true, track: "Austin", sessions: { p1: "-", p2: "-", p3: "-", q: "-", race: "-" } },
-  { id: 20, name: "Mexican GP", date: "2026-10-25", packageId: "skip_4", packageType: "Không xem", price: 0, isSkipped: true, track: "Mexico City", sessions: { p1: "-", p2: "-", p3: "-", q: "-", race: "-" } },
-
-  // GÓI 30 NGÀY - NHÓM 2 (Chỉ tính tiền chặng đầu)
-  { id: 21, name: "Sao Paulo GP", date: "2026-11-08", packageId: "pkg_group_2", packageType: "Gói 30 ngày (Cuối mùa)", price: 50000, track: "Interlagos", sessions: { p1: "21:30", p2: "01:00", p3: "21:30", q: "01:00", race: "00:00" } },
-  { id: 22, name: "Las Vegas GP", date: "2026-11-21", packageId: "pkg_group_2", packageType: "Chung gói 30 ngày", price: 0, track: "Las Vegas", sessions: { p1: "09:30", p2: "13:00", p3: "09:30", q: "13:00", race: "13:00" } },
-  { id: 23, name: "Qatar GP", date: "2026-11-29", packageId: "pkg_group_2", packageType: "Chung gói 30 ngày", price: 0, track: "Lusail", sessions: { p1: "20:30", p2: "00:00", p3: "19:30", q: "23:00", race: "23:00" } },
-  { id: 24, name: "Abu Dhabi GP", date: "2026-12-06", packageId: "pkg_group_2", packageType: "Chung gói 30 ngày", price: 0, track: "Yas Marina", sessions: { p1: "16:30", p2: "20:00", p3: "17:30", q: "21:00", race: "20:00" } }
+  { id: 1, name: "Australian GP", date: "2026-03-08", packageId: "pkg_1", packageType: "Gói 7 ngày", price: 25000, track: "Albert Park", hasSprint: false, sessions: { p1: "08:30", p2: "12:00", p3: "08:30", q: "12:00", race: "11:00" } },
+  { id: 2, name: "Chinese GP", date: "2026-03-15", packageId: "pkg_2", packageType: "Gói 7 ngày", price: 25000, track: "Thượng Hải", hasSprint: true, sessions: { p1: "10:30", sq: "14:30", sprint: "14:00", q: "14:00", race: "14:00" } },
+  { id: 3, name: "Japanese GP", date: "2026-03-29", packageId: "pkg_3", packageType: "Gói 7 ngày", price: 25000, track: "Suzuka", hasSprint: false, sessions: { p1: "09:30", p2: "13:00", p3: "09:30", q: "13:00", race: "12:00" } },
+  { id: 4, name: "Bahrain GP", date: "2026-04-12", packageId: "pkg_4", packageType: "Gói 7 ngày", price: 25000, track: "Bahrain", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "19:30", q: "23:00", race: "22:00" } },
+  { id: 5, name: "Saudi Arabian GP", date: "2026-04-20", packageId: "pkg_5", packageType: "Gói 7 ngày", price: 25000, track: "Jeddah", hasSprint: false, sessions: { p1: "20:30", p2: "00:00", p3: "20:30", q: "00:00", race: "00:00" } },
+  { id: 6, name: "Miami GP", date: "2026-05-04", packageId: "skip_1", packageType: "Không xem", price: 0, isSkipped: true, track: "Miami", hasSprint: false, sessions: { p1: "-", p2: "-", p3: "-", q: "-", race: "-" } },
+  { id: 7, name: "Canadian GP", date: "2026-05-25", packageId: "skip_2", packageType: "Không xem", price: 0, isSkipped: true, track: "Montreal", hasSprint: true, sessions: { p1: "-", sq: "-", sprint: "-", q: "-", race: "-" } },
+  { id: 8, name: "Monaco GP", date: "2026-06-07", packageId: "pkg_8", packageType: "Gói 7 ngày", price: 25000, track: "Monaco", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 9, name: "Barcelona-Catalunya GP", date: "2026-06-14", packageId: "pkg_9", packageType: "Gói 7 ngày", price: 25000, track: "Barcelona", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 10, name: "Austrian GP", date: "2026-06-28", packageId: "pkg_group_1", packageType: "Gói 30 ngày (Tháng 7)", price: 90000, track: "Red Bull Ring", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 11, name: "British GP", date: "2026-07-05", packageId: "pkg_group_1", packageType: "Chung gói 30 ngày", price: 0, track: "Silverstone", hasSprint: true, sessions: { p1: "18:30", sq: "22:30", sprint: "18:00", q: "22:00", race: "21:00" } },
+  { id: 12, name: "Belgian GP", date: "2026-07-19", packageId: "pkg_group_1", packageType: "Chung gói 30 ngày", price: 0, track: "Spa-Francorchamps", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 13, name: "Hungarian GP", date: "2026-07-26", packageId: "pkg_group_1", packageType: "Chung gói 30 ngày", price: 0, track: "Hungaroring", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 14, name: "Dutch GP", date: "2026-08-23", packageId: "pkg_14", packageType: "Gói 7 ngày", price: 25000, track: "Zandvoort", hasSprint: true, sessions: { p1: "17:30", sq: "21:30", sprint: "17:00", q: "21:00", race: "20:00" } },
+  { id: 15, name: "Italian GP", date: "2026-09-06", packageId: "pkg_15", packageType: "Gói 7 ngày", price: 25000, track: "Monza", hasSprint: false, sessions: { p1: "17:30", p2: "21:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 16, name: "Spanish GP", date: "2026-09-13", packageId: "pkg_16", packageType: "Gói 7 ngày", price: 25000, track: "Madrid", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 17, name: "Azerbaijan GP", date: "2026-09-26", packageId: "pkg_17", packageType: "Gói 7 ngày", price: 25000, track: "Baku", hasSprint: false, sessions: { p1: "15:30", p2: "19:00", p3: "15:30", q: "19:00", race: "18:00" } },
+  { id: 18, name: "Singapore GP", date: "2026-10-11", packageId: "pkg_18", packageType: "Gói 7 ngày", price: 25000, track: "Marina Bay", hasSprint: true, sessions: { p1: "16:30", sq: "19:30", sprint: "16:00", q: "20:00", race: "19:00" } },
+  { id: 19, name: "United States GP", date: "2026-10-26", packageId: "skip_3", packageType: "Không xem", price: 0, isSkipped: true, track: "Austin", hasSprint: true, sessions: { p1: "-", sq: "-", sprint: "-", q: "-", race: "-" } },
+  { id: 20, name: "Mexican GP", date: "2026-11-02", packageId: "skip_4", packageType: "Không xem", price: 0, isSkipped: true, track: "Mexico City", hasSprint: false, sessions: { p1: "-", p2: "-", p3: "-", q: "-", race: "-" } },
+  { id: 21, name: "Sao Paulo GP", date: "2026-11-09", packageId: "pkg_group_2", packageType: "Gói 30 ngày (Cuối mùa)", price: 90000, track: "Interlagos", hasSprint: false, sessions: { p1: "22:30", p2: "02:00", p3: "21:30", q: "01:00", race: "00:00" } },
+  { id: 22, name: "Las Vegas GP", date: "2026-11-22", packageId: "pkg_group_2", packageType: "Chung gói 30 ngày", price: 0, track: "Las Vegas", hasSprint: false, sessions: { p1: "07:30", p2: "11:00", p3: "07:30", q: "11:00", race: "11:00" } },
+  { id: 23, name: "Qatar GP", date: "2026-11-29", packageId: "pkg_group_2", packageType: "Chung gói 30 ngày", price: 0, track: "Lusail", hasSprint: false, sessions: { p1: "20:30", p2: "00:00", p3: "21:30", q: "01:00", race: "23:00" } },
+  { id: 24, name: "Abu Dhabi GP", date: "2026-12-06", packageId: "pkg_group_2", packageType: "Chung gói 30 ngày", price: 0, track: "Yas Marina", hasSprint: false, sessions: { p1: "16:30", p2: "20:00", p3: "17:30", q: "21:00", race: "20:00" } }
 ];
+
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/THAY_BANG_BIN_ID_CUA_BAN'; // Bạn nhớ sửa lại Bin ID
+const JSONBIN_KEY = 'THAY_BANG_MASTER_KEY_CUA_BAN'; // Bạn nhớ sửa lại Key
+
+// Helper lấy mã Quốc gia để get cờ từ flagcdn
+const getCountryCode = (raceName) => {
+  const mapping = {
+    "Australian GP": "au", "Chinese GP": "cn", "Japanese GP": "jp", "Bahrain GP": "bh",
+    "Saudi Arabian GP": "sa", "Miami GP": "us", "Emilia Romagna GP": "it", "Monaco GP": "mc",
+    "Canadian GP": "ca", "Barcelona-Catalunya GP": "es", "Spanish GP": "es", "Austrian GP": "at",
+    "British GP": "gb", "Belgian GP": "be", "Hungarian GP": "hu", "Dutch GP": "nl",
+    "Italian GP": "it", "Azerbaijan GP": "az", "Singapore GP": "sg", "United States GP": "us",
+    "Mexican GP": "mx", "Sao Paulo GP": "br", "Las Vegas GP": "us", "Qatar GP": "qa", "Abu Dhabi GP": "ae"
+  };
+  return mapping[raceName] || "un";
+};
+
+// Helper format ngày đua (Lùi ngày để hiển thị đúng cho T6, T7)
+const formatDateOffset = (dateStr, offsetDays) => {
+  const date = new Date(dateStr);
+  date.setDate(date.getDate() + offsetDays);
+  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+};
 
 export default function App() {
   const [races] = useState(initialRaceData);
   const [purchasedPackages, setPurchasedPackages] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('f1_tv360_purchases_v2');
-    if (saved) {
-      setPurchasedPackages(JSON.parse(saved));
+  const fetchPurchases = useCallback(async () => {
+    setIsSyncing(true);
+    setError(null);
+    try {
+      const response = await fetch(JSONBIN_URL, {
+        headers: { 'X-Master-Key': JSONBIN_KEY }
+      });
+      if (!response.ok) throw new Error('Không thể tải dữ liệu đồng bộ');
+      const data = await response.json();
+      if (data.record && Array.isArray(data.record.purchases)) {
+         setPurchasedPackages(data.record.purchases);
+         localStorage.setItem('f1_tv360_purchases_sync', JSON.stringify(data.record.purchases));
+      }
+    } catch (err) {
+      console.error(err);
+      const saved = localStorage.getItem('f1_tv360_purchases_sync');
+      if (saved) {
+        setPurchasedPackages(JSON.parse(saved));
+      } else {
+          setError('Chưa cấu hình API đồng bộ. Đang dùng dữ liệu trên máy hiện tại.');
+      }
+    } finally {
+      setIsSyncing(false);
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('f1_tv360_purchases_v2', JSON.stringify(purchasedPackages));
-  }, [purchasedPackages]);
+    fetchPurchases();
+    const interval = setInterval(fetchPurchases, 30000);
+    return () => clearInterval(interval);
+  }, [fetchPurchases]);
+
+  const updateRemoteData = async (newPurchases) => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch(JSONBIN_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': JSONBIN_KEY
+        },
+        body: JSON.stringify({ purchases: newPurchases })
+      });
+      if (!response.ok) throw new Error('Lỗi khi lưu dữ liệu lên server');
+      localStorage.setItem('f1_tv360_purchases_sync', JSON.stringify(newPurchases));
+    } catch(err) {
+       console.error(err);
+       setError('Lỗi kết nối. Dữ liệu chỉ được lưu tạm trên máy này.');
+       localStorage.setItem('f1_tv360_purchases_sync', JSON.stringify(newPurchases));
+    } finally {
+      setIsSyncing(false);
+    }
+  }
 
   const togglePurchase = (packageId) => {
-    if (packageId.startsWith('skip')) return; // Không thể mua chặng đã bỏ qua
-    
-    setPurchasedPackages(prev => 
-      prev.includes(packageId) 
-        ? prev.filter(pId => pId !== packageId) 
-        : [...prev, packageId]
-    );
+    if (packageId.startsWith('skip')) return; 
+    let newPurchases;
+    if (purchasedPackages.includes(packageId)) {
+        newPurchases = purchasedPackages.filter(pId => pId !== packageId);
+    } else {
+        newPurchases = [...purchasedPackages, packageId];
+    }
+    setPurchasedPackages(newPurchases);
+    updateRemoteData(newPurchases);
   };
 
   const formatCurrency = (amount) => {
@@ -78,22 +136,18 @@ export default function App() {
 
   const today = new Date();
 
-  // Tìm chặng đua tiếp theo
   const nextRace = useMemo(() => {
     const upcoming = races.filter(r => new Date(r.date) >= today);
     return upcoming.sort((a, b) => new Date(a.date) - new Date(b.date))[0];
   }, [races]);
 
-  // Thống kê tài chính
   const stats = useMemo(() => {
     const totalCost = races.reduce((sum, r) => sum + (r.price || 0), 0);
-    // Tính số tiền đã tiêu dựa trên các packageId đã mua (tìm giá của chặng master trong package)
     let spentCost = 0;
     purchasedPackages.forEach(pkgId => {
       const masterRace = races.find(r => r.packageId === pkgId && r.price > 0);
       if (masterRace) spentCost += masterRace.price;
     });
-    
     return { total: totalCost, spent: spentCost, remaining: totalCost - spentCost };
   }, [races, purchasedPackages]);
 
@@ -102,11 +156,7 @@ export default function App() {
     if (filter === 'upcoming') {
       result = result.filter(r => new Date(r.date) >= today);
     } else if (filter === 'action-needed') {
-      result = result.filter(r => 
-        new Date(r.date) >= today && 
-        !r.isSkipped && 
-        !purchasedPackages.includes(r.packageId)
-      );
+      result = result.filter(r => new Date(r.date) >= today && !r.isSkipped && !purchasedPackages.includes(r.packageId));
     }
     return result;
   }, [races, filter, purchasedPackages]);
@@ -116,16 +166,25 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
         <div className="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="bg-red-600 p-2 rounded-lg">
+            <div className="bg-red-600 p-2 rounded-lg shadow-lg shadow-red-900/20">
               <Trophy size={24} className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white tracking-tight">F1 2026 Tracker</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-white tracking-tight">F1 2026 Tracker</h1>
+                {isSyncing ? (
+                    <RefreshCw size={14} className="text-slate-400 animate-spin" />
+                ) : (
+                    <button onClick={fetchPurchases} className="text-emerald-400 hover:text-emerald-300 transition-colors" title="Đồng bộ thủ công">
+                        <CheckCircle2 size={14} />
+                    </button>
+                )}
+              </div>
               <p className="text-xs text-slate-400">Tối ưu hoá gói TV360</p>
             </div>
           </div>
           
-          <div className="flex bg-slate-900 rounded-xl p-2 border border-slate-800 text-sm">
+          <div className="flex bg-slate-900 rounded-xl p-2 border border-slate-800 text-sm shadow-inner">
              <div className="px-3 border-r border-slate-700">
               <span className="block text-xs text-slate-500">Dự kiến mùa giải</span>
               <span className="font-semibold text-slate-300">{formatCurrency(stats.total)}</span>
@@ -144,25 +203,71 @@ export default function App() {
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         
-        {/* Banner chặng tiếp theo */}
-        {nextRace && (
-          <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950 rounded-2xl border border-slate-800 p-6 shadow-2xl">
-            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-              <Trophy size={120} />
+        {error && (
+            <div className="bg-red-900/30 border border-red-500 text-red-200 p-3 rounded-lg text-sm flex items-center gap-2">
+                <AlertCircle size={16} /> {error}
             </div>
-            <div className="relative z-10">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-medium mb-4">
-                <AlertCircle size={14} /> Chặng đua tiếp theo
-              </span>
-              <h2 className="text-3xl font-bold text-white mb-2">{nextRace.name}</h2>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400 mb-6">
-                <span className="flex items-center gap-1"><Calendar size={16} /> {formatDate(nextRace.date)}</span>
-                <span className="flex items-center gap-1"><MapPin size={16} /> {nextRace.track}</span>
+        )}
+
+        {/* Banner chặng đua tiếp theo */}
+        {nextRace && (
+          <section className="relative overflow-hidden bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl">
+            {/* Background Cờ Quốc gia (mờ) */}
+            <div className="absolute inset-0 z-0 opacity-5 pointer-events-none transition-all">
+               <img src={`https://flagcdn.com/w1280/${getCountryCode(nextRace.name)}.png`} className="w-full h-full object-cover mix-blend-luminosity" alt="" />
+            </div>
+
+            <div className="relative z-10 p-6 sm:p-8">
+              <div className="flex justify-between items-start mb-6">
+                 <div>
+                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/50 text-red-400 border border-red-900/50 text-xs font-medium mb-4 shadow-sm">
+                      <AlertCircle size={14} /> Chặng đua tiếp theo
+                   </span>
+                   <div className="flex items-center gap-4">
+                      <img src={`https://flagcdn.com/w80/${getCountryCode(nextRace.name)}.png`} className="w-12 h-8 rounded shadow-sm object-cover border border-slate-700" alt="Flag" />
+                      <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">{nextRace.name}</h2>
+                   </div>
+                   <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400 mt-3">
+                      <span className="flex items-center gap-1.5 bg-slate-950/50 px-2.5 py-1 rounded-md border border-slate-800"><MapPin size={14} className="text-slate-500" /> {nextRace.track}</span>
+                   </div>
+                 </div>
               </div>
-              
-              {/* Box Hành động */}
+
+              {/* Bảng thời gian chi tiết - Mới */}
+              {!nextRace.isSkipped && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                 {/* Khối Thứ 6 */}
+                 <div className="bg-slate-950/60 backdrop-blur-sm border border-slate-800/80 rounded-xl p-3.5 shadow-inner">
+                   <div className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-semibold border-b border-slate-800/80 pb-1.5">Thứ 6, {formatDateOffset(nextRace.date, -2)}</div>
+                   <div className="space-y-2 mt-2">
+                     <div className="flex justify-between items-center"><span className="text-slate-300 text-sm font-medium">Practice 1</span><span className="font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded">{nextRace.sessions.p1}</span></div>
+                     <div className="flex justify-between items-center"><span className="text-slate-300 text-sm font-medium">{nextRace.hasSprint ? 'Sprint Quali' : 'Practice 2'}</span><span className="font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded">{nextRace.hasSprint ? nextRace.sessions.sq : nextRace.sessions.p2}</span></div>
+                   </div>
+                 </div>
+                 
+                 {/* Khối Thứ 7 */}
+                 <div className="bg-slate-950/60 backdrop-blur-sm border border-slate-800/80 rounded-xl p-3.5 shadow-inner">
+                   <div className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-semibold border-b border-slate-800/80 pb-1.5">Thứ 7, {formatDateOffset(nextRace.date, -1)}</div>
+                   <div className="space-y-2 mt-2">
+                     <div className="flex justify-between items-center"><span className="text-slate-300 text-sm font-medium">{nextRace.hasSprint ? 'Sprint Race' : 'Practice 3'}</span><span className="font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded">{nextRace.hasSprint ? nextRace.sessions.sprint : nextRace.sessions.p3}</span></div>
+                     <div className="flex justify-between items-center"><span className="text-slate-200 text-sm font-medium">Qualifying</span><span className="font-mono text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">{nextRace.sessions.q}</span></div>
+                   </div>
+                 </div>
+
+                 {/* Khối Chủ Nhật */}
+                 <div className="bg-gradient-to-br from-red-950/40 to-slate-950/60 backdrop-blur-sm border border-red-900/50 rounded-xl p-3.5 shadow-inner flex flex-col justify-between">
+                   <div className="text-[11px] text-red-400/80 uppercase tracking-wider mb-2 font-semibold border-b border-red-900/30 pb-1.5">Chủ Nhật, {formatDateOffset(nextRace.date, 0)}</div>
+                   <div className="flex items-center justify-between mt-auto mb-1">
+                     <span className="text-red-400 font-black tracking-widest text-sm drop-shadow-sm">MAIN RACE</span>
+                     <span className="font-mono text-red-400 font-bold text-2xl drop-shadow-md">{nextRace.sessions.race}</span>
+                   </div>
+                 </div>
+              </div>
+              )}
+
+              {/* Nút hành động Mua gói */}
               {nextRace.isSkipped ? (
-                <div className="bg-slate-900/80 rounded-lg p-4 border border-slate-800 flex items-center gap-3">
+                <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800 flex items-center gap-3">
                   <Moon className="text-slate-500" size={24} />
                   <div>
                     <p className="text-sm font-medium text-slate-300">Bạn sẽ không xem chặng này</p>
@@ -171,7 +276,7 @@ export default function App() {
                 </div>
               ) : (
                 !purchasedPackages.includes(nextRace.packageId) && (
-                  <div className="bg-red-950/30 rounded-lg p-4 border border-red-900/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="bg-red-950/20 rounded-xl p-4 border border-red-900/50 flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-sm">
                     <div>
                       <p className="text-sm font-medium text-white mb-1">Cần mua gói để xem chặng này</p>
                       <p className="text-xs text-slate-400 flex items-center gap-1">
@@ -181,7 +286,8 @@ export default function App() {
                     </div>
                     <button 
                       onClick={() => togglePurchase(nextRace.packageId)}
-                      className="whitespace-nowrap bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-red-900/20"
+                      disabled={isSyncing}
+                      className="whitespace-nowrap bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-red-900/20"
                     >
                       Đánh dấu đã mua ({formatCurrency(
                         races.find(r => r.packageId === nextRace.packageId && r.price > 0)?.price || 0
@@ -194,6 +300,7 @@ export default function App() {
           </section>
         )}
 
+        {/* Thanh filter */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {['all', 'upcoming', 'action-needed'].map((f) => (
             <button
@@ -212,11 +319,11 @@ export default function App() {
           ))}
         </div>
 
+        {/* Lưới các chặng đua - Cấu trúc 3 hàng mới */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredRaces.map((race) => {
             const isPast = new Date(race.date) < new Date(today.setHours(0,0,0,0));
             const isBought = purchasedPackages.includes(race.packageId);
-            const isGroupMaster = race.price > 0 && race.packageId.includes('group');
             const isGroupChild = race.price === 0 && race.packageId.includes('group');
 
             return (
@@ -249,26 +356,31 @@ export default function App() {
                 </div>
 
                 {!race.isSkipped ? (
-                  <div className="p-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs flex-grow">
-                    <div>
-                      <div className="flex justify-between items-center bg-slate-950/50 px-2 py-1 rounded">
-                        <span className="text-slate-500">P1</span>
+                  <div className="p-4 flex flex-col gap-2 flex-grow text-xs">
+                    {/* Hàng 1 và 2: P1, P2, P3, Quali */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex justify-between items-center bg-slate-950/50 px-2 py-1.5 rounded border border-slate-800/50">
+                        <span className="text-slate-500 font-medium">P1</span>
                         <span className="font-mono text-slate-300">{race.sessions.p1}</span>
                       </div>
-                      <div className="flex justify-between items-center bg-slate-950/50 px-2 py-1 rounded mt-1">
-                        <span className="text-slate-500">P2/SQ</span>
-                        <span className="font-mono text-slate-300">{race.sessions.p2}</span>
+                      <div className="flex justify-between items-center bg-slate-950/50 px-2 py-1.5 rounded border border-slate-800/50">
+                        <span className="text-slate-500 font-medium">{race.hasSprint ? 'SQ' : 'P2'}</span>
+                        <span className="font-mono text-slate-300">{race.hasSprint ? race.sessions.sq : race.sessions.p2}</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-slate-950/50 px-2 py-1.5 rounded border border-slate-800/50">
+                        <span className="text-slate-500 font-medium">{race.hasSprint ? 'Sprint' : 'P3'}</span>
+                        <span className="font-mono text-slate-300">{race.hasSprint ? race.sessions.sprint : race.sessions.p3}</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-slate-950/50 px-2 py-1.5 rounded border border-slate-800/50">
+                        <span className="text-slate-300 font-medium">Quali</span>
+                        <span className="font-mono text-slate-200">{race.sessions.q}</span>
                       </div>
                     </div>
-                    <div>
-                      <div className="flex justify-between items-center bg-slate-950/50 px-2 py-1 rounded">
-                        <span className="text-slate-500">P3/Spr</span>
-                        <span className="font-mono text-slate-300">{race.sessions.p3}</span>
-                      </div>
-                      <div className="flex justify-between items-center bg-slate-950/50 px-2 py-1 rounded mt-1 border border-red-900/30">
-                        <span className="text-red-400 font-medium">Q/Race</span>
-                        <span className="font-mono text-red-400">{race.sessions.q}</span>
-                      </div>
+                    
+                    {/* Hàng 3: MAIN RACE (Full width) */}
+                    <div className="flex justify-between items-center bg-red-950/20 border border-red-900/50 px-3 py-2 rounded mt-1">
+                      <span className="text-red-400 font-bold tracking-wider text-[11px]">MAIN RACE</span>
+                      <span className="font-mono text-red-400 font-bold text-sm">{race.sessions.race}</span>
                     </div>
                   </div>
                 ) : (
@@ -277,7 +389,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Phần trạng thái gói cước */}
                 <div className={`p-3 mt-auto flex items-center justify-between border-t ${
                   race.isSkipped ? 'bg-slate-950/30 border-slate-800/50' :
                   isBought ? 'bg-emerald-950/30 border-emerald-900/50' : 
@@ -312,13 +423,14 @@ export default function App() {
                   {!race.isSkipped && (
                     <button 
                       onClick={() => togglePurchase(race.packageId)}
+                      disabled={isSyncing}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all ${
                         isBought 
                           ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' 
                           : (isGroupChild 
                               ? 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30'
                               : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white')
-                      }`}
+                      } disabled:opacity-50`}
                     >
                       {isBought ? <CheckCircle2 size={14} /> : <Circle size={14} />}
                       {isBought ? 'Đã mua' : (isGroupChild ? 'Mua theo nhóm' : 'Chưa mua')}
