@@ -1,38 +1,36 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Calendar, MapPin, Tv, CheckCircle2, Circle, AlertCircle, Trophy, Moon, Layers, RefreshCw } from 'lucide-react';
 
-// Dữ liệu F1 2026 chuẩn hóa kèm THÊM NGÀY MUA TỐI ƯU (purchaseDate)
 const initialRaceData = [
-  { id: 1, name: "Australian GP", date: "2026-03-08", packageId: "pkg_1", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-03-07", track: "Albert Park", hasSprint: false, sessions: { p1: "08:30", p2: "12:00", p3: "08:30", q: "12:00", race: "11:00" } },
-  { id: 2, name: "Chinese GP", date: "2026-03-15", packageId: "pkg_2", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-03-14", track: "Thượng Hải", hasSprint: true, sessions: { p1: "10:30", sq: "14:30", sprint: "14:00", q: "14:00", race: "14:00" } },
-  { id: 3, name: "Japanese GP", date: "2026-03-29", packageId: "pkg_3", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-03-28", track: "Suzuka", hasSprint: false, sessions: { p1: "09:30", p2: "13:00", p3: "09:30", q: "13:00", race: "12:00" } },
-  { id: 4, name: "Bahrain GP", date: "2026-04-12", packageId: "pkg_4", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-04-11", track: "Bahrain", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "19:30", q: "23:00", race: "22:00" } },
-  { id: 5, name: "Saudi Arabian GP", date: "2026-04-20", packageId: "pkg_5", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-04-19", track: "Jeddah", hasSprint: false, sessions: { p1: "20:30", p2: "00:00", p3: "20:30", q: "00:00", race: "00:00" } },
+  { id: 1, name: "Australian GP", date: "2026-03-08", packageId: "pkg_g1", packageType: "Gói 30 ngày (Đợt 1)", price: 29000, purchaseDate: "2026-03-07", track: "Albert Park", hasSprint: false, sessions: { p1: "08:30", p2: "12:00", p3: "08:30", q: "12:00", race: "11:00" } },
+  { id: 2, name: "Chinese GP", date: "2026-03-15", packageId: "pkg_g1", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-03-07", track: "Thượng Hải", hasSprint: true, sessions: { p1: "10:30", sq: "14:30", sprint: "14:00", q: "14:00", race: "14:00" } },
+  { id: 3, name: "Japanese GP", date: "2026-03-29", packageId: "pkg_g1", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-03-07", track: "Suzuka", hasSprint: false, sessions: { p1: "09:30", p2: "13:00", p3: "09:30", q: "13:00", race: "12:00" } },
+  { id: 4, name: "Bahrain GP", date: "2026-04-12", packageId: "pkg_g2", packageType: "Gói 30 ngày (Đợt 2)", price: 29000, purchaseDate: "2026-04-11", track: "Bahrain", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "19:30", q: "23:00", race: "22:00" } },
+  { id: 5, name: "Saudi Arabian GP", date: "2026-04-20", packageId: "pkg_g2", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-04-11", track: "Jeddah", hasSprint: false, sessions: { p1: "20:30", p2: "00:00", p3: "20:30", q: "00:00", race: "00:00" } },
   { id: 6, name: "Miami GP", date: "2026-05-04", packageId: "skip_1", packageType: "Không xem", price: 0, purchaseDate: null, isSkipped: true, track: "Miami", hasSprint: false, sessions: { p1: "-", p2: "-", p3: "-", q: "-", race: "-" } },
   { id: 7, name: "Canadian GP", date: "2026-05-25", packageId: "skip_2", packageType: "Không xem", price: 0, purchaseDate: null, isSkipped: true, track: "Montreal", hasSprint: true, sessions: { p1: "-", sq: "-", sprint: "-", q: "-", race: "-" } },
-  { id: 8, name: "Monaco GP", date: "2026-06-07", packageId: "pkg_8", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-06-06", track: "Monaco", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 9, name: "Barcelona-Catalunya GP", date: "2026-06-14", packageId: "pkg_9", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-06-13", track: "Barcelona", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 10, name: "Austrian GP", date: "2026-06-28", packageId: "pkg_group_1", packageType: "Gói 30 ngày (Tháng 7)", price: 90000, purchaseDate: "2026-06-27", track: "Red Bull Ring", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 11, name: "British GP", date: "2026-07-05", packageId: "pkg_group_1", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-06-27", track: "Silverstone", hasSprint: true, sessions: { p1: "18:30", sq: "22:30", sprint: "18:00", q: "22:00", race: "21:00" } },
-  { id: 12, name: "Belgian GP", date: "2026-07-19", packageId: "pkg_group_1", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-06-27", track: "Spa-Francorchamps", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 13, name: "Hungarian GP", date: "2026-07-26", packageId: "pkg_group_1", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-06-27", track: "Hungaroring", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 14, name: "Dutch GP", date: "2026-08-23", packageId: "pkg_14", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-08-21", track: "Zandvoort", hasSprint: true, sessions: { p1: "17:30", sq: "21:30", sprint: "17:00", q: "21:00", race: "20:00" } },
-  { id: 15, name: "Italian GP", date: "2026-09-06", packageId: "pkg_15", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-09-05", track: "Monza", hasSprint: false, sessions: { p1: "17:30", p2: "21:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 16, name: "Spanish GP", date: "2026-09-13", packageId: "pkg_16", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-09-12", track: "Madrid", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
-  { id: 17, name: "Azerbaijan GP", date: "2026-09-26", packageId: "pkg_17", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-09-25", track: "Baku", hasSprint: false, sessions: { p1: "15:30", p2: "19:00", p3: "15:30", q: "19:00", race: "18:00" } },
-  { id: 18, name: "Singapore GP", date: "2026-10-11", packageId: "pkg_18", packageType: "Gói 7 ngày", price: 25000, purchaseDate: "2026-10-09", track: "Marina Bay", hasSprint: true, sessions: { p1: "16:30", sq: "19:30", sprint: "16:00", q: "20:00", race: "19:00" } },
+  { id: 8, name: "Monaco GP", date: "2026-06-07", packageId: "pkg_g3", packageType: "Gói 30 ngày (Đợt 3)", price: 29000, purchaseDate: "2026-06-06", track: "Monaco", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 9, name: "Barcelona-Catalunya GP", date: "2026-06-14", packageId: "pkg_g3", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-06-06", track: "Barcelona", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 10, name: "Austrian GP", date: "2026-06-28", packageId: "pkg_g3", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-06-06", track: "Red Bull Ring", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 11, name: "British GP", date: "2026-07-05", packageId: "pkg_g3", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-06-06", track: "Silverstone", hasSprint: true, sessions: { p1: "18:30", sq: "22:30", sprint: "18:00", q: "22:00", race: "21:00" } },
+  { id: 12, name: "Belgian GP", date: "2026-07-19", packageId: "pkg_g4", packageType: "Gói 30 ngày (Đợt 4)", price: 29000, purchaseDate: "2026-07-18", track: "Spa-Francorchamps", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 13, name: "Hungarian GP", date: "2026-07-26", packageId: "pkg_g4", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-07-18", track: "Hungaroring", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 14, name: "Dutch GP", date: "2026-08-23", packageId: "pkg_g5", packageType: "Gói 30 ngày (Đợt 5)", price: 29000, purchaseDate: "2026-08-21", track: "Zandvoort", hasSprint: true, sessions: { p1: "17:30", sq: "21:30", sprint: "17:00", q: "21:00", race: "20:00" } },
+  { id: 15, name: "Italian GP", date: "2026-09-06", packageId: "pkg_g5", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-08-21", track: "Monza", hasSprint: false, sessions: { p1: "17:30", p2: "21:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 16, name: "Spanish GP", date: "2026-09-13", packageId: "pkg_g5", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-08-21", track: "Madrid", hasSprint: false, sessions: { p1: "18:30", p2: "22:00", p3: "17:30", q: "21:00", race: "20:00" } },
+  { id: 17, name: "Azerbaijan GP", date: "2026-09-26", packageId: "pkg_g6", packageType: "Gói 30 ngày (Đợt 6)", price: 29000, purchaseDate: "2026-09-25", track: "Baku", hasSprint: false, sessions: { p1: "15:30", p2: "19:00", p3: "15:30", q: "19:00", race: "18:00" } },
+  { id: 18, name: "Singapore GP", date: "2026-10-11", packageId: "pkg_g6", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-09-25", track: "Marina Bay", hasSprint: true, sessions: { p1: "16:30", sq: "19:30", sprint: "16:00", q: "20:00", race: "19:00" } },
   { id: 19, name: "United States GP", date: "2026-10-26", packageId: "skip_3", packageType: "Không xem", price: 0, purchaseDate: null, isSkipped: true, track: "Austin", hasSprint: true, sessions: { p1: "-", sq: "-", sprint: "-", q: "-", race: "-" } },
   { id: 20, name: "Mexican GP", date: "2026-11-02", packageId: "skip_4", packageType: "Không xem", price: 0, purchaseDate: null, isSkipped: true, track: "Mexico City", hasSprint: false, sessions: { p1: "-", p2: "-", p3: "-", q: "-", race: "-" } },
-  { id: 21, name: "Sao Paulo GP", date: "2026-11-09", packageId: "pkg_group_2", packageType: "Gói 30 ngày (Cuối mùa)", price: 90000, purchaseDate: "2026-11-08", track: "Interlagos", hasSprint: false, sessions: { p1: "22:30", p2: "02:00", p3: "21:30", q: "01:00", race: "00:00" } },
-  { id: 22, name: "Las Vegas GP", date: "2026-11-22", packageId: "pkg_group_2", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-11-08", track: "Las Vegas", hasSprint: false, sessions: { p1: "07:30", p2: "11:00", p3: "07:30", q: "11:00", race: "11:00" } },
-  { id: 23, name: "Qatar GP", date: "2026-11-29", packageId: "pkg_group_2", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-11-08", track: "Lusail", hasSprint: false, sessions: { p1: "20:30", p2: "00:00", p3: "21:30", q: "01:00", race: "23:00" } },
-  { id: 24, name: "Abu Dhabi GP", date: "2026-12-06", packageId: "pkg_group_2", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-11-08", track: "Yas Marina", hasSprint: false, sessions: { p1: "16:30", p2: "20:00", p3: "17:30", q: "21:00", race: "20:00" } }
+  { id: 21, name: "Sao Paulo GP", date: "2026-11-09", packageId: "pkg_g7", packageType: "Gói 30 ngày (Đợt 7)", price: 29000, purchaseDate: "2026-11-08", track: "Interlagos", hasSprint: false, sessions: { p1: "22:30", p2: "02:00", p3: "21:30", q: "01:00", race: "00:00" } },
+  { id: 22, name: "Las Vegas GP", date: "2026-11-22", packageId: "pkg_g7", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-11-08", track: "Las Vegas", hasSprint: false, sessions: { p1: "07:30", p2: "11:00", p3: "07:30", q: "11:00", race: "11:00" } },
+  { id: 23, name: "Qatar GP", date: "2026-11-29", packageId: "pkg_g7", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-11-08", track: "Lusail", hasSprint: false, sessions: { p1: "20:30", p2: "00:00", p3: "21:30", q: "01:00", race: "23:00" } },
+  { id: 24, name: "Abu Dhabi GP", date: "2026-12-06", packageId: "pkg_g7", packageType: "Chung gói 30 ngày", price: 0, purchaseDate: "2026-11-08", track: "Yas Marina", hasSprint: false, sessions: { p1: "16:30", p2: "20:00", p3: "17:30", q: "21:00", race: "20:00" } }
 ];
 
-const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/69a85c64d0ea881f40ee9d8d'; 
-const JSONBIN_KEY = '$2a$10$iEZhrIHbw8gsqJAc/wPUUelZgp4iUUMgFy8ilmua2GHT.qVPDXxX.';
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/THAY_BANG_BIN_ID_CUA_BAN'; 
+const JSONBIN_KEY = 'THAY_BANG_MASTER_KEY_CUA_BAN';
 
-// Helper lấy mã Quốc gia để get cờ từ flagcdn
 const getCountryCode = (raceName) => {
   const mapping = {
     "Australian GP": "au", "Chinese GP": "cn", "Japanese GP": "jp", "Bahrain GP": "bh",
@@ -45,7 +43,6 @@ const getCountryCode = (raceName) => {
   return mapping[raceName] || "un";
 };
 
-// Helper format ngày đua (Lùi ngày để hiển thị đúng cho T6, T7)
 const formatDateOffset = (dateStr, offsetDays) => {
   const date = new Date(dateStr);
   date.setDate(date.getDate() + offsetDays);
@@ -210,10 +207,8 @@ export default function App() {
             </div>
         )}
 
-        {/* Banner chặng đua tiếp theo */}
         {nextRace && (
           <section className="relative overflow-hidden bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl">
-            {/* Background Cờ Quốc gia (mờ) */}
             <div className="absolute inset-0 z-0 opacity-5 pointer-events-none transition-all">
                <img src={`https://flagcdn.com/w1280/${getCountryCode(nextRace.name)}.png`} className="w-full h-full object-cover mix-blend-luminosity" alt="" />
             </div>
@@ -234,7 +229,6 @@ export default function App() {
                  </div>
               </div>
 
-              {/* Bảng thời gian chi tiết */}
               {!nextRace.isSkipped && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                  <div className="bg-slate-950/60 backdrop-blur-sm border border-slate-800/80 rounded-xl p-3.5 shadow-inner">
@@ -263,7 +257,6 @@ export default function App() {
               </div>
               )}
 
-              {/* Box Cần mua gói (Bổ sung ngày tối ưu) */}
               {nextRace.isSkipped ? (
                 <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800 flex items-center gap-3">
                   <Moon className="text-slate-500" size={24} />
@@ -415,10 +408,9 @@ export default function App() {
                             <span className="text-xs font-semibold text-slate-400 block mt-1">
                               {formatCurrency(race.price)}
                             </span>
-                            {/* THÊM DÒNG NHẮC NHỞ Ở ĐÂY NẾU CHƯA MUA */}
                             {!isBought && race.purchaseDate && (
                                 <span className="text-[10px] text-emerald-500 font-medium block mt-0.5">
-                                  Ngày mua: {formatDate(race.purchaseDate)}
+                                  Khuyên mua: {formatDate(race.purchaseDate)}
                                 </span>
                             )}
                           </div>
